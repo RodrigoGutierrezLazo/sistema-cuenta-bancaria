@@ -1,16 +1,5 @@
 import React, { useState } from 'react';
-import { 
-  ArrowDownLeft, 
-  ArrowUpRight, 
-  ArrowLeftRight, 
-  Calendar, 
-  Receipt, 
-  Filter, 
-  CheckCircle2, 
-  Clock, 
-  Search,
-  Wallet
-} from 'lucide-react';
+import { Search } from 'lucide-react';
 
 export default function HistorialTransacciones({
   transacciones = [],
@@ -25,7 +14,7 @@ export default function HistorialTransacciones({
     const fecha = new Date(fechaStr);
     return new Intl.DateTimeFormat('es-PE', {
       day: '2-digit',
-      month: 'short',
+      month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -40,13 +29,10 @@ export default function HistorialTransacciones({
     }).format(cantidad || 0);
   };
 
-  // Filtrado reactivo
   const transaccionesFiltradas = transacciones.filter((t) => {
-    // Filtro por tipo
     if (filtroTipo !== 'TODAS' && t.tipo !== filtroTipo) {
       return false;
     }
-    // Búsqueda por texto (descripción, cuentas)
     if (busqueda.trim() !== '') {
       const q = busqueda.toLowerCase();
       const coincideDesc = t.descripcion?.toLowerCase().includes(q);
@@ -59,169 +45,212 @@ export default function HistorialTransacciones({
   });
 
   return (
-    <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200">
+    <section className="bg-white border border-[#DEDCD3] rounded-md overflow-hidden">
       
-      {/* Encabezado y Contador */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-purple-600" />
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight">
-              Historial de Movimientos
-            </h3>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-800">
-              {transacciones.length}
-            </span>
+      {/* Cabecera del estado de cuenta */}
+      <div className="p-5 sm:p-6 border-b border-[#EAE8E1]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-base font-bold text-[#0B192C]">
+                Estado de cuenta y movimientos
+              </h2>
+              <span className="font-mono text-[11px] font-medium px-2 py-0.5 rounded bg-[#F5F4F0] text-slate-700 border border-[#DEDCD3]">
+                {transacciones.length} {transacciones.length === 1 ? 'registro' : 'registros'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Detalle cronológico de operaciones asociadas a la cuenta <span className="font-mono font-medium text-slate-700">{cuentaActiva?.numeroCuenta}</span>
+            </p>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Registro detallado de transacciones asociadas a la cuenta {cuentaActiva?.numeroCuenta}
-          </p>
+
+          {/* Buscador */}
+          <div className="relative w-full sm:w-60">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              placeholder="Filtrar por glosa o cuenta..."
+              className="w-full pl-8 pr-3 py-1.5 bg-[#FAF9F6] border border-[#C8C5BA] rounded text-xs text-slate-800 placeholder:text-slate-400 focus:bg-white focus:border-[#0B192C] focus:outline-none transition-colors"
+            />
+          </div>
         </div>
 
-        {/* Buscador Rápido */}
-        <div className="relative w-full sm:w-56">
-          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            placeholder="Buscar concepto o cuenta..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-purple-600 focus:outline-none transition-all"
-          />
+        {/* Pestañas de filtro */}
+        <div className="flex flex-wrap items-center gap-1.5 mt-4 pt-4 border-t border-[#F0EFEA]">
+          {[
+            { id: 'TODAS', label: 'Todos los movimientos' },
+            { id: 'DEPOSITO', label: 'Depósitos' },
+            { id: 'RETIRO', label: 'Retiros' },
+            { id: 'TRANSFERENCIA', label: 'Transferencias' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFiltroTipo(tab.id)}
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                filtroTipo === tab.id
+                  ? 'bg-[#0B192C] text-white'
+                  : 'bg-[#F5F4F0] text-slate-600 hover:bg-[#EAE8E1] hover:text-slate-900'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Barra de Filtros */}
-      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl mb-5 text-xs font-medium">
-        {[
-          { id: 'TODAS', label: 'Todas' },
-          { id: 'DEPOSITO', label: 'Depósitos' },
-          { id: 'RETIRO', label: 'Retiros' },
-          { id: 'TRANSFERENCIA', label: 'Transferencias' },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setFiltroTipo(tab.id)}
-            className={`px-3 py-1.5 rounded-lg transition-all ${
-              filtroTipo === tab.id
-                ? 'bg-white text-purple-900 font-bold shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Lista de Transacciones */}
+      {/* Cuerpo del historial */}
       {cargando ? (
-        <div className="space-y-3 py-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-16 bg-slate-100 rounded-2xl animate-pulse"></div>
+        <div className="p-6 space-y-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-11 bg-stone-100 rounded animate-pulse"></div>
           ))}
         </div>
       ) : transaccionesFiltradas.length === 0 ? (
-        <div className="text-center py-12 px-4 border border-dashed border-slate-200 rounded-2xl">
-          <div className="w-12 h-12 mx-auto rounded-full bg-purple-50 flex items-center justify-center text-purple-600 mb-3">
-            <Wallet className="w-6 h-6" />
-          </div>
-          <h4 className="text-sm font-bold text-slate-800">No se registran movimientos</h4>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+        <div className="py-14 px-6 text-center">
+          <p className="text-sm font-semibold text-slate-800">
+            Sin movimientos para mostrar
+          </p>
+          <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
             {busqueda || filtroTipo !== 'TODAS'
-              ? 'No hay transacciones que coincidan con los filtros seleccionados.'
-              : 'Esta cuenta aún no tiene movimientos bancarios registrados. Realiza un depósito para comenzar.'}
+              ? 'No se encontraron registros que coincidan con el criterio de filtrado actual.'
+              : 'Aún no existen operaciones registradas en esta cuenta bancaria. Utilice el formulario lateral para registrar un depósito.'}
           </p>
         </div>
       ) : (
-        <div className="divide-y divide-slate-100 overflow-hidden">
-          {transaccionesFiltradas.map((t) => {
-            const esDeposito = t.tipo === 'DEPOSITO';
-            const esRetiro = t.tipo === 'RETIRO';
-            const esTransferencia = t.tipo === 'TRANSFERENCIA';
-            
-            // Determinar si una transferencia fue enviada o recibida por la cuenta activa
-            const esTransferenciaEnviada = esTransferencia && t.cuentaOrigen === cuentaActiva?.numeroCuenta;
-            const esTransferenciaRecibida = esTransferencia && t.cuentaDestino === cuentaActiva?.numeroCuenta;
+        <>
+          {/* Vista de tabla para escritorio / tablet */}
+          <div className="hidden sm:block overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#F5F4F0] border-b border-[#DEDCD3] text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                  <th className="py-3 pl-6 pr-3">Fecha / Hora</th>
+                  <th className="py-3 px-3">Operación</th>
+                  <th className="py-3 px-3">Concepto y Cuentas</th>
+                  <th className="py-3 px-3 text-right">Importe</th>
+                  <th className="py-3 pl-3 pr-6 text-right">Saldo</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#EAE8E1] text-xs">
+                {transaccionesFiltradas.map((t) => {
+                  const esDeposito = t.tipo === 'DEPOSITO';
+                  const esRetiro = t.tipo === 'RETIRO';
+                  const esTransferencia = t.tipo === 'TRANSFERENCIA';
+                  const esTransferenciaEnviada = esTransferencia && t.cuentaOrigen === cuentaActiva?.numeroCuenta;
+                  const esTransferenciaRecibida = esTransferencia && t.cuentaDestino === cuentaActiva?.numeroCuenta;
+                  const esIngreso = esDeposito || esTransferenciaRecibida;
 
-            const esIngreso = esDeposito || esTransferenciaRecibida;
-
-            return (
-              <div
-                key={t._id || `${t.tipo}-${t.fecha}`}
-                className="py-3.5 sm:py-4 px-2 sm:px-3 hover:bg-slate-50 rounded-2xl transition-colors flex items-center justify-between gap-4"
-              >
-                {/* Icono y Detalles */}
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <div
-                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 ${
-                      esIngreso
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-rose-100 text-rose-700'
-                    }`}
-                  >
-                    {esDeposito && <ArrowDownLeft className="w-5 h-5" />}
-                    {esRetiro && <ArrowUpRight className="w-5 h-5" />}
-                    {esTransferencia && <ArrowLeftRight className="w-5 h-5" />}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                        {esDeposito && 'Depósito en Cuenta'}
-                        {esRetiro && 'Retiro de Efectivo'}
-                        {esTransferenciaEnviada && `Transferencia a ${t.cuentaDestino || 'Tercero'}`}
-                        {esTransferenciaRecibida && `Transferencia de ${t.cuentaOrigen || 'Tercero'}`}
-                        {esTransferencia && !esTransferenciaEnviada && !esTransferenciaRecibida && 'Transferencia Interbancaria'}
-                      </p>
-
-                      <span
-                        className={`hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                          esIngreso
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : 'bg-rose-50 text-rose-700 border border-rose-200'
-                        }`}
-                      >
-                        {t.tipo}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-slate-500 truncate mt-0.5">
-                      {t.descripcion || 'Sin descripción'}
-                    </p>
-
-                    <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-1">
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
+                  return (
+                    <tr
+                      key={t._id || `${t.tipo}-${t.fecha}`}
+                      className="hover:bg-[#FAF9F6] transition-colors"
+                    >
+                      {/* Fecha */}
+                      <td className="py-3.5 pl-6 pr-3 font-mono text-[11px] text-slate-600 whitespace-nowrap tabular-nums">
                         {formatoFecha(t.fecha)}
-                      </span>
-                      {t.saldoPosterior !== null && t.saldoPosterior !== undefined && (
-                        <span className="hidden md:inline text-slate-400">
-                          • Saldo restante: S/ {Number(t.saldoPosterior).toFixed(2)}
+                      </td>
+
+                      {/* Tipo de operación */}
+                      <td className="py-3.5 px-3 whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1.5 font-medium text-slate-800">
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              esIngreso ? 'bg-emerald-600' : 'bg-rose-600'
+                            }`}
+                          />
+                          {esDeposito && 'Depósito'}
+                          {esRetiro && 'Retiro'}
+                          {esTransferenciaEnviada && 'Transf. enviada'}
+                          {esTransferenciaRecibida && 'Transf. recibida'}
+                          {esTransferencia && !esTransferenciaEnviada && !esTransferenciaRecibida && 'Transferencia'}
                         </span>
-                      )}
-                    </div>
+                      </td>
+
+                      {/* Concepto y relación de cuentas */}
+                      <td className="py-3.5 px-3">
+                        <p className="font-medium text-slate-900">
+                          {t.descripcion || 'Operación en cuenta'}
+                        </p>
+                        <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                          {esDeposito && `Destino: ${t.cuentaDestino || cuentaActiva?.numeroCuenta}`}
+                          {esRetiro && `Origen: ${t.cuentaOrigen || cuentaActiva?.numeroCuenta}`}
+                          {esTransferencia && `${t.cuentaOrigen} → ${t.cuentaDestino}`}
+                        </p>
+                      </td>
+
+                      {/* Importe */}
+                      <td className="py-3.5 px-3 text-right whitespace-nowrap font-mono font-semibold tabular-nums">
+                        <span className={esIngreso ? 'text-emerald-700' : 'text-rose-700'}>
+                          {esIngreso ? '+' : '-'} {formatoMoneda(t.monto)}
+                        </span>
+                      </td>
+
+                      {/* Saldo resultante */}
+                      <td className="py-3.5 pl-3 pr-6 text-right whitespace-nowrap font-mono text-slate-600 tabular-nums">
+                        {t.saldoPosterior !== null && t.saldoPosterior !== undefined
+                          ? formatoMoneda(t.saldoPosterior)
+                          : '---'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Vista adaptativa para móviles */}
+          <div className="sm:hidden divide-y divide-[#EAE8E1]">
+            {transaccionesFiltradas.map((t) => {
+              const esDeposito = t.tipo === 'DEPOSITO';
+              const esRetiro = t.tipo === 'RETIRO';
+              const esTransferencia = t.tipo === 'TRANSFERENCIA';
+              const esTransferenciaEnviada = esTransferencia && t.cuentaOrigen === cuentaActiva?.numeroCuenta;
+              const esTransferenciaRecibida = esTransferencia && t.cuentaDestino === cuentaActiva?.numeroCuenta;
+              const esIngreso = esDeposito || esTransferenciaRecibida;
+
+              return (
+                <div key={t._id || `${t.tipo}-${t.fecha}`} className="p-4 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-900">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          esIngreso ? 'bg-emerald-600' : 'bg-rose-600'
+                        }`}
+                      />
+                      {esDeposito && 'Depósito'}
+                      {esRetiro && 'Retiro'}
+                      {esTransferenciaEnviada && `Transf. a ${t.cuentaDestino}`}
+                      {esTransferenciaRecibida && `Transf. de ${t.cuentaOrigen}`}
+                    </span>
+
+                    <span
+                      className={`font-mono text-sm font-semibold tabular-nums ${
+                        esIngreso ? 'text-emerald-700' : 'text-rose-700'
+                      }`}
+                    >
+                      {esIngreso ? '+' : '-'} {formatoMoneda(t.monto)}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-slate-700">
+                    {t.descripcion || 'Operación registrada'}
+                  </p>
+
+                  <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
+                    <span>{formatoFecha(t.fecha)}</span>
+                    {t.saldoPosterior !== null && t.saldoPosterior !== undefined && (
+                      <span>Saldo: {formatoMoneda(t.saldoPosterior)}</span>
+                    )}
                   </div>
                 </div>
-
-                {/* Monto */}
-                <div className="text-right shrink-0">
-                  <span
-                    className={`text-sm sm:text-base font-black font-mono tracking-tight ${
-                      esIngreso ? 'text-emerald-600' : 'text-rose-600'
-                    }`}
-                  >
-                    {esIngreso ? '+' : '-'} {formatoMoneda(t.monto)}
-                  </span>
-                  <p className="text-[10px] text-slate-400">
-                    {esIngreso ? 'Abonado' : 'Debitado'}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
-    </div>
+    </section>
   );
 }

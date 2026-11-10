@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
-import { CheckCircle2, AlertTriangle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 
 export default function AlertNotification({ mensaje, tipo = 'exito', onClose }) {
   useEffect(() => {
     if (!mensaje) return;
     const timer = setTimeout(() => {
       onClose();
-    }, 4500);
+    }, 4000);
     return () => clearTimeout(timer);
   }, [mensaje, onClose]);
 
@@ -15,33 +15,36 @@ export default function AlertNotification({ mensaje, tipo = 'exito', onClose }) 
   const esExito = tipo === 'exito';
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 max-w-md w-full px-4 animate-bounce-short">
+    <div className="fixed bottom-5 right-5 z-50 max-w-sm w-full px-4 sm:px-0">
       <div
-        className={`p-4 rounded-2xl shadow-xl border flex items-start justify-between gap-3 backdrop-blur-md ${
+        className={`p-3.5 rounded border shadow-md flex items-start justify-between gap-3 ${
           esExito
-            ? 'bg-emerald-900/95 text-white border-emerald-500/50 shadow-emerald-950/40'
-            : 'bg-rose-900/95 text-white border-rose-500/50 shadow-rose-950/40'
+            ? 'bg-[#0B192C] text-white border-[#1E3350]'
+            : 'bg-rose-950 text-white border-rose-800'
         }`}
       >
-        <div className="flex items-start gap-3">
-          {esExito ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-          ) : (
-            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-          )}
+        <div className="flex items-start gap-2.5">
+          <span
+            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+              esExito ? 'bg-emerald-400' : 'bg-rose-400'
+            }`}
+          />
           <div>
-            <h5 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-              {esExito ? 'Transacción Exitosa' : 'Aviso del Sistema'}
-            </h5>
-            <p className="text-sm font-medium text-white mt-0.5">{mensaje}</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-300">
+              {esExito ? 'Confirmación de operación' : 'Error en la operación'}
+            </p>
+            <p className="text-xs text-stone-100 mt-0.5 leading-relaxed">
+              {mensaje}
+            </p>
           </div>
         </div>
 
         <button
           onClick={onClose}
-          className="text-slate-300 hover:text-white p-1 transition-colors rounded-lg hover:bg-white/10"
+          className="text-slate-400 hover:text-white p-1 transition-colors"
+          aria-label="Cerrar notificación"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
