@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { CheckCircle2, AlertTriangle } from 'lucide-react';
 
+/**
+ * Componente AlertNotification: Notificación flotante centrada (estilo Ombria .toast).
+ */
 export default function AlertNotification({ mensaje, tipo = 'exito', onClose }) {
   useEffect(() => {
     if (!mensaje) return;
-    const timer = setTimeout(() => {
-      onClose();
-    }, 4000);
-    return () => clearTimeout(timer);
+    const temporizador = setTimeout(onClose, 3800);
+    return () => clearTimeout(temporizador);
   }, [mensaje, onClose]);
 
   if (!mensaje) return null;
@@ -15,36 +16,27 @@ export default function AlertNotification({ mensaje, tipo = 'exito', onClose }) 
   const esExito = tipo === 'exito';
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 max-w-sm w-full px-4 sm:px-0">
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4 pointer-events-none">
       <div
-        className={`p-3.5 rounded border shadow-md flex items-start justify-between gap-3 ${
-          esExito
-            ? 'bg-[#0B192C] text-white border-[#1E3350]'
-            : 'bg-rose-950 text-white border-rose-800'
-        }`}
+        className="pointer-events-auto rounded-2xl px-4 py-3 flex items-center gap-3 shadow-xl font-semibold text-sm"
+        style={{
+          background: 'var(--accent)',
+          color: 'var(--accent-ink)',
+        }}
       >
-        <div className="flex items-start gap-2.5">
-          <span
-            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-              esExito ? 'bg-emerald-400' : 'bg-rose-400'
-            }`}
-          />
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-300">
-              {esExito ? 'Confirmación de operación' : 'Error en la operación'}
-            </p>
-            <p className="text-xs text-stone-100 mt-0.5 leading-relaxed">
-              {mensaje}
-            </p>
-          </div>
-        </div>
-
+        {esExito ? (
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+        ) : (
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+        )}
+        <span className="flex-1 text-xs sm:text-sm leading-snug">{mensaje}</span>
         <button
+          type="button"
           onClick={onClose}
-          className="text-slate-400 hover:text-white p-1 transition-colors"
-          aria-label="Cerrar notificación"
+          className="h-7 px-3 rounded-lg text-xs font-bold"
+          style={{ background: 'rgba(127, 127, 127, 0.24)' }}
         >
-          <X className="w-3.5 h-3.5" />
+          Cerrar
         </button>
       </div>
     </div>

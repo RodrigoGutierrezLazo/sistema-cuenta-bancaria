@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Copy, Check } from 'lucide-react';
+import { Eye, EyeOff, Copy, Check, Wallet } from 'lucide-react';
 
+/**
+ * Componente SaldoCard: Muestra el saldo actual y los datos principales de la cuenta.
+ * Se actualiza inmediatamente tras cualquier depósito, retiro o transferencia.
+ */
 export default function SaldoCard({ cuenta, cargando }) {
   const [mostrarSaldo, setMostrarSaldo] = useState(true);
   const [copiado, setCopiado] = useState(false);
@@ -9,116 +13,108 @@ export default function SaldoCard({ cuenta, cargando }) {
     if (!cuenta?.numeroCuenta) return;
     navigator.clipboard.writeText(cuenta.numeroCuenta);
     setCopiado(true);
-    setTimeout(() => setCopiado(false), 2000);
+    setTimeout(() => setCopiado(false), 1800);
   };
 
-  const formatoMoneda = (cantidad) => {
-    return new Intl.NumberFormat('es-PE', {
+  const formatearMoneda = (monto) =>
+    new Intl.NumberFormat('es-PE', {
       style: 'currency',
       currency: 'PEN',
       minimumFractionDigits: 2,
-    }).format(cantidad || 0);
-  };
+    }).format(monto || 0);
 
   return (
-    <section className="bg-white border border-[#DEDCD3] rounded-md overflow-hidden">
+    <section className="ombria-card p-5 sm:p-6">
       
-      {/* Franja superior de identificación de cuenta */}
-      <div className="bg-[#0B192C] text-white px-5 py-3.5 flex items-center justify-between border-b border-[#1E3350]">
+      {/* Encabezado de la tarjeta: Tipo de cuenta y estado */}
+      <div className="flex items-center justify-between gap-2 mb-5">
         <div className="flex items-center gap-2.5">
-          <span className="text-xs font-medium text-slate-300 uppercase tracking-wider">
-            Cuenta {cuenta?.tipoCuenta || 'Ahorros'}
-          </span>
-          <span className="text-slate-600">•</span>
-          <span className="font-mono text-xs font-medium text-white">
-            {cuenta?.numeroCuenta || '---'}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={copiarNumeroCuenta}
-            className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#152A47] hover:bg-[#1E3A5F] text-[11px] text-slate-200 border border-[#29466B] transition-colors"
-            title="Copiar número de cuenta"
+          <div
+            className="w-9 h-9 rounded-xl grid place-items-center"
+            style={{ background: 'var(--card-2)', boxShadow: 'inset 0 0 0 1px var(--line)' }}
           >
-            {copiado ? (
-              <>
-                <Check className="w-3 h-3 text-emerald-400" />
-                <span className="text-emerald-300">Copiado</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3 h-3 text-slate-300" />
-                <span>Copiar N.°</span>
-              </>
-            )}
-          </button>
-
-          <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-800/70">
-            {cuenta?.estado || 'ACTIVA'}
-          </span>
+            <Wallet className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="text-sm font-semibold block leading-tight">
+              Cuenta de {cuenta?.tipoCuenta || 'Ahorros'}
+            </span>
+            <small className="text-xs font-medium" style={{ color: 'var(--muted)' }}>
+              Moneda: Soles ({cuenta?.moneda || 'PEN'})
+            </small>
+          </div>
         </div>
+
+        <span className="ombria-pill ombria-pill--good">
+          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+          {cuenta?.estado || 'ACTIVA'}
+        </span>
       </div>
 
-      {/* Cuerpo principal de saldo */}
-      <div className="p-5 sm:p-6">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      {/* Bloque central: Saldo disponible */}
+      <div className="ombria-well p-4 sm:p-5 mb-5 flex items-center justify-between gap-4">
+        <div>
+          <span
+            className="text-xs font-semibold uppercase tracking-wider block mb-1"
+            style={{ color: 'var(--muted)' }}
+          >
             Saldo disponible
           </span>
-          <button
-            onClick={() => setMostrarSaldo(!mostrarSaldo)}
-            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors"
-            title={mostrarSaldo ? 'Ocultar saldo' : 'Mostrar saldo'}
-          >
-            {mostrarSaldo ? (
-              <>
-                <EyeOff className="w-3.5 h-3.5" />
-                <span>Ocultar</span>
-              </>
-            ) : (
-              <>
-                <Eye className="w-3.5 h-3.5" />
-                <span>Mostrar</span>
-              </>
-            )}
-          </button>
-        </div>
 
-        <div className="my-1">
           {cargando ? (
-            <div className="h-10 w-44 bg-stone-200 animate-pulse rounded"></div>
-          ) : mostrarSaldo ? (
-            <p className="font-display text-3xl sm:text-4xl font-bold text-[#0B192C] tabular-nums tracking-tight">
-              {formatoMoneda(cuenta?.saldo)}
-            </p>
+            <div
+              className="h-9 w-40 rounded-lg animate-pulse"
+              style={{ background: 'var(--card-3)' }}
+            />
           ) : (
-            <p className="font-mono text-3xl sm:text-4xl font-semibold text-slate-400 tracking-widest">
-              S/ ••••••••
-            </p>
+            <strong className="text-3xl sm:text-4xl font-semibold tracking-tight block">
+              {mostrarSaldo ? formatearMoneda(cuenta?.saldo) : 'S/ ••••••••'}
+            </strong>
           )}
         </div>
 
-        {/* Metadatos del titular */}
-        <div className="mt-6 pt-4 border-t border-[#EAE8E1] grid grid-cols-2 gap-4 text-xs">
-          <div>
-            <span className="block text-[11px] text-slate-500 uppercase tracking-wider mb-0.5">
-              Titular registrado
-            </span>
-            <span className="font-semibold text-slate-900">
-              {cuenta?.titular || 'Cargando...'}
-            </span>
-          </div>
+        <button
+          type="button"
+          onClick={() => setMostrarSaldo(!mostrarSaldo)}
+          className="ombria-ibtn shrink-0"
+          title={mostrarSaldo ? 'Ocultar saldo' : 'Mostrar saldo'}
+        >
+          {mostrarSaldo ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
+      </div>
 
-          <div className="text-right">
-            <span className="block text-[11px] text-slate-500 uppercase tracking-wider mb-0.5">
-              Moneda oficial
-            </span>
-            <span className="font-medium text-slate-800">
-              {cuenta?.moneda === 'PEN' ? 'Soles (PEN)' : cuenta?.moneda || 'Soles (PEN)'}
-            </span>
-          </div>
+      {/* Pie de tarjeta: Titular y código de cuenta copiable */}
+      <div className="flex items-center justify-between gap-3 pt-1">
+        <div className="min-w-0">
+          <small
+            className="text-xs font-semibold block"
+            style={{ color: 'var(--muted)' }}
+          >
+            Titular de la cuenta
+          </small>
+          <b className="text-sm font-semibold truncate block mt-0.5">
+            {cuenta?.titular || 'Cargando...'}
+          </b>
         </div>
+
+        <button
+          type="button"
+          onClick={copiarNumeroCuenta}
+          className="ombria-chip h-8 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
+          title="Copiar número de cuenta"
+        >
+          {copiado ? (
+            <>
+              <Check className="w-3.5 h-3.5" style={{ color: 'var(--good)' }} />
+              <span>Copiado</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-3.5 h-3.5" />
+              <span>{cuenta?.numeroCuenta || '---'}</span>
+            </>
+          )}
+        </button>
       </div>
 
     </section>

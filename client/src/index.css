@@ -2,45 +2,238 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   SISTEMA DE TOKENS ESTÉTICOS (INSPIRADO EN OMBRIA — ALTA VELOCIDAD)
+   Fuente principal: Urbanist (400..700) con números tabulares
+   ========================================================================== */
+:root {
+  --font: "Urbanist", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Tema Claro (Light) */
+  --bg: #c6c6c4;
+  --bg-ambient: radial-gradient(circle at 18% 12%, #e2e2df 0%, #c8c8c5 52%, #b5b5b2 100%);
+  --sheet: rgba(245, 245, 244, 0.86);
+  --card: rgba(255, 255, 255, 0.66);
+  --card-2: rgba(255, 255, 255, 0.56);
+  --card-3: rgba(255, 255, 255, 0.85);
+  --panel: #f4f4f3;
+  --ink: #191919;
+  --ink-2: #262626;
+  --muted: #525252;
+  --line: rgba(0, 0, 0, 0.09);
+  --line-2: rgba(0, 0, 0, 0.16);
+  --glass-hi: rgba(255, 255, 255, 0.6);
+  --glass-rim: rgba(255, 255, 255, 0.78);
+  --glass-top: rgba(255, 255, 255, 0.92);
+  --accent: #1e1e1e;
+  --accent-ink: #f7f7f7;
+  --accent-soft: rgba(0, 0, 0, 0.08);
+  --good: #1b6a40;
+  --good-soft: rgba(32, 130, 78, 0.14);
+  --bad: #a3361f;
+  --bad-soft: rgba(200, 70, 40, 0.13);
+  --info: #22578c;
+  --info-soft: rgba(40, 100, 170, 0.13);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 18px 40px -26px rgba(0, 0, 0, 0.28);
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  /* Tema Oscuro (Dark — por defecto en Ombria) */
+  --bg: #222222;
+  --bg-ambient: radial-gradient(circle at 20% 10%, #383838 0%, #242424 52%, #181818 100%);
+  --sheet: rgba(58, 58, 58, 0.78);
+  --card: rgba(255, 255, 255, 0.065);
+  --card-2: rgba(255, 255, 255, 0.085);
+  --card-3: rgba(255, 255, 255, 0.15);
+  --panel: #333333;
+  --ink: #f6f6f6;
+  --ink-2: #efefef;
+  --muted: #b5b5b5;
+  --line: rgba(255, 255, 255, 0.11);
+  --line-2: rgba(255, 255, 255, 0.2);
+  --glass-hi: rgba(255, 255, 255, 0.07);
+  --glass-rim: rgba(255, 255, 255, 0.2);
+  --glass-top: rgba(255, 255, 255, 0.34);
+  --accent: #efefef;
+  --accent-ink: #1c1c1c;
+  --accent-soft: rgba(255, 255, 255, 0.14);
+  --good: #a6e0b9;
+  --good-soft: rgba(143, 214, 169, 0.16);
+  --bad: #f8b0a2;
+  --bad-soft: rgba(246, 160, 139, 0.16);
+  --info: #b4d2ef;
+  --info-soft: rgba(163, 200, 238, 0.15);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.22), 0 22px 44px -26px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+
 @layer base {
+  html {
+    background: var(--bg);
+    font-family: var(--font);
+  }
+
   body {
-    @apply bg-[#F5F4F0] text-[#14181F] antialiased min-h-screen selection:bg-[#0B192C] selection:text-white;
-    font-family: 'Public Sans', system-ui, -apple-system, sans-serif;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-  }
-
-  h1, h2, h3, h4 {
-    font-family: 'Archivo', system-ui, sans-serif;
-  }
-}
-
-@layer utilities {
-  .font-display {
-    font-family: 'Archivo', system-ui, sans-serif;
-  }
-  .font-mono {
-    font-family: 'JetBrains Mono', monospace;
-  }
-  .tabular-nums {
+    background: var(--bg-ambient);
+    background-attachment: fixed;
+    color: var(--ink);
+    font-family: var(--font);
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.45;
     font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100dvh;
+    margin: 0;
+  }
+
+  button, input, select, textarea {
+    font-family: inherit;
+    color: inherit;
   }
 }
 
-/* Scrollbar sobria */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+/* Superficies cristal mate sin penalización de rendimiento GPU */
+.ombria-top {
+  background: linear-gradient(165deg, var(--glass-hi), transparent 46%), var(--sheet);
+  box-shadow: inset 0 0 0 1px var(--glass-rim), inset 1px 1px 0 var(--glass-top), var(--shadow);
+  border-radius: 22px;
 }
 
-::-webkit-scrollbar-track {
-  background: #F5F4F0;
+.ombria-main {
+  background: linear-gradient(140deg, var(--glass-hi), transparent 38%), var(--sheet);
+  box-shadow: inset 0 0 0 1px var(--glass-rim), inset 1px 1px 0 var(--glass-top), var(--shadow);
+  border-radius: 34px;
 }
 
-::-webkit-scrollbar-thumb {
-  background: #C8C5BA;
-  border-radius: 2px;
+.ombria-card {
+  background: linear-gradient(135deg, var(--glass-hi), transparent 55%), var(--card);
+  box-shadow: inset 0 0 0 1px var(--glass-rim), inset 1px 1px 0 var(--glass-top), var(--shadow-sm);
+  border-radius: 26px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #9E9B8F;
+.ombria-well {
+  background: var(--card-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+  border-radius: 18px;
+}
+
+.ombria-seg {
+  background: var(--card-2);
+  box-shadow: inset 0 0 0 1px var(--glass-rim);
+  border-radius: 99px;
+  padding: 3px;
+}
+
+.ombria-seg-btn {
+  border-radius: 99px;
+  color: var(--muted);
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ombria-seg-btn.is-active {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.35);
+}
+
+.ombria-input {
+  background: var(--card-2);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+  color: var(--ink);
+  border-radius: 14px;
+  border: 0;
+  transition: box-shadow 0.15s ease;
+}
+
+.ombria-input:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1.5px var(--accent), 0 0 0 4px var(--accent-soft);
+}
+
+.ombria-input option {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.ombria-chip {
+  background: var(--card-2);
+  box-shadow: inset 0 0 0 1px var(--glass-rim);
+  color: var(--muted);
+  border-radius: 99px;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ombria-chip:hover {
+  background: var(--card-3);
+  color: var(--ink);
+}
+
+.ombria-chip.is-active {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: none;
+}
+
+.ombria-btn-primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: 99px;
+  font-weight: 600;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.ombria-btn-primary:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.ombria-btn-primary:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.ombria-ibtn {
+  width: 42px;
+  height: 42px;
+  border-radius: 99px;
+  background: var(--card-2);
+  box-shadow: inset 0 0 0 1px var(--glass-rim);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  transition: background-color 0.15s ease;
+}
+
+.ombria-ibtn:hover:not(:disabled) {
+  background: var(--card-3);
+}
+
+.ombria-pill {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ombria-pill--good {
+  background: var(--good-soft);
+  color: var(--good);
+}
+
+.ombria-pill--bad {
+  background: var(--bad-soft);
+  color: var(--bad);
+}
+
+.ombria-pill--neutral {
+  background: var(--card-3);
+  color: var(--ink-2);
 }

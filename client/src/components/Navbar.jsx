@@ -1,81 +1,112 @@
 import React from 'react';
-import { RefreshCw } from 'lucide-react';
+import { Landmark, RefreshCw, Sun, Moon } from 'lucide-react';
 
+/**
+ * Componente Navbar: Barra superior flotante estilo Ombria.
+ * Permite cambiar la cuenta activa, sincronizar datos y alternar el tema visual.
+ */
 export default function Navbar({
   cuentas = [],
   cuentaActiva,
   onSeleccionarCuenta,
   cargando,
   onRecargar,
+  tema = 'dark',
+  onCambiarTema,
 }) {
-  return (
-    <header className="bg-[#0B192C] text-stone-100 border-b border-[#1E3350]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3.5 sm:h-16 gap-3">
-          
-          {/* Identidad institucional */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded bg-white text-[#0B192C] flex items-center justify-center font-display font-bold text-sm tracking-tighter shrink-0">
-                BC
-              </div>
-              <div className="flex items-baseline gap-2.5">
-                <span className="font-display font-semibold text-base tracking-tight text-white">
-                  Banca en Línea
-                </span>
-                <span className="hidden md:inline text-slate-500 text-xs">|</span>
-                <span className="hidden md:inline text-xs text-slate-300 font-normal">
-                  Gestión de Cuentas y Tesorería
-                </span>
-              </div>
-            </div>
+  // Iniciales del titular para el avatar circular estilo Ombria
+  const obtenerIniciales = (nombre = '') =>
+    nombre
+      .split(' ')
+      .slice(0, 2)
+      .map((p) => p[0])
+      .join('')
+      .toUpperCase() || 'BC';
 
-            <button
-              onClick={onRecargar}
-              disabled={cargando}
-              className="sm:hidden p-1.5 rounded border border-slate-700 text-slate-300 hover:text-white"
-              title="Actualizar datos"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin' : ''}`} />
-            </button>
+  return (
+    <header className="sticky top-4 z-30 max-w-6xl w-full mx-auto px-4 sm:px-6">
+      <div className="ombria-top h-16 px-3 sm:px-4 flex items-center justify-between gap-3">
+        
+        {/* Marca principal */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: 'var(--accent)', color: 'var(--accent-ink)' }}
+          >
+            <Landmark className="w-5 h-5" />
           </div>
 
-          {/* Controles de sesión y selector de cuenta */}
-          <div className="flex items-center justify-between sm:justify-end gap-3">
-            <div className="flex items-center gap-2 flex-1 sm:flex-initial">
-              <label
-                htmlFor="select-cuenta"
-                className="text-[11px] uppercase tracking-wider text-slate-400 font-medium shrink-0"
-              >
-                Cuenta:
-              </label>
-              <select
-                id="select-cuenta"
-                value={cuentaActiva?.numeroCuenta || ''}
-                onChange={(e) => onSeleccionarCuenta(e.target.value)}
-                className="w-full sm:w-auto bg-[#132640] border border-[#264163] hover:border-slate-500 rounded px-2.5 py-1.5 text-xs text-white font-medium focus:outline-none focus:border-stone-300 transition-colors cursor-pointer"
-                aria-label="Seleccionar cuenta activa"
-              >
-                {cuentas.map((c) => (
-                  <option key={c.numeroCuenta} value={c.numeroCuenta} className="bg-[#0B192C] text-white">
-                    {c.numeroCuenta} — {c.titular}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="truncate">
+            <span className="font-bold text-lg tracking-tight block leading-none">
+              Ombria Bank
+            </span>
+            <small className="text-xs font-semibold block mt-1" style={{ color: 'var(--muted)' }}>
+              Ingeniería Web · Gestión Bancaria
+            </small>
+          </div>
+        </div>
 
-            <button
-              onClick={onRecargar}
-              disabled={cargando}
-              title="Sincronizar saldo y movimientos"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#132640] hover:bg-[#1B3354] text-slate-200 border border-[#264163] text-xs font-medium transition-colors disabled:opacity-50"
+        {/* Selector de cuenta activa y herramientas */}
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          
+          <div className="flex items-center gap-2">
+            <span
+              className="hidden md:inline text-xs font-semibold"
+              style={{ color: 'var(--muted)' }}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${cargando ? 'animate-spin' : ''}`} />
-              <span>Actualizar</span>
-            </button>
+              Cuenta activa:
+            </span>
+            <select
+              id="select-cuenta"
+              value={cuentaActiva?.numeroCuenta || ''}
+              onChange={(e) => onSeleccionarCuenta(e.target.value)}
+              className="ombria-input h-10 px-3.5 text-xs sm:text-sm font-semibold cursor-pointer rounded-full"
+              aria-label="Seleccionar cuenta bancaria"
+            >
+              {cuentas.map((c) => (
+                <option key={c.numeroCuenta} value={c.numeroCuenta}>
+                  {c.numeroCuenta} · {c.titular}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Botón circular para sincronizar con el backend */}
+          <button
+            type="button"
+            onClick={onRecargar}
+            disabled={cargando}
+            title="Sincronizar saldo y movimientos"
+            className="ombria-ibtn shrink-0 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${cargando ? 'animate-spin' : ''}`} />
+          </button>
+
+          {/* Botón circular para cambiar entre tema Oscuro y Claro (como en Ombria) */}
+          <button
+            type="button"
+            onClick={onCambiarTema}
+            title={tema === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            className="ombria-ibtn shrink-0"
+          >
+            {tema === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
+          {/* Avatar circular del titular */}
+          <div
+            className="hidden sm:grid w-10 h-10 rounded-full place-items-center text-xs font-bold shrink-0"
+            style={{
+              background: '#e6d6c4',
+              color: '#1b1b1b',
+              boxShadow: '0 0 0 2px var(--glass-rim)',
+            }}
+            title={cuentaActiva?.titular || 'Titular'}
+          >
+            {obtenerIniciales(cuentaActiva?.titular)}
           </div>
 
         </div>
+
       </div>
     </header>
   );

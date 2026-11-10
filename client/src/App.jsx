@@ -7,6 +7,10 @@ import AlertNotification from './components/AlertNotification';
 import { api } from './services/api';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
+/**
+ * Componente principal App:
+ * Gestiona el estado reactivo de la cuenta activa, el historial y las operaciones.
+ */
 export default function App() {
   const [cuentas, setCuentas] = useState([]);
   const [cuentaActiva, setCuentaActiva] = useState(null);
@@ -15,27 +19,39 @@ export default function App() {
   const [procesando, setProcesando] = useState(false);
   const [errorGlobal, setErrorGlobal] = useState('');
   const [notificacion, setNotificacion] = useState({ mensaje: '', tipo: 'exito' });
+  const [tema, setTema] = useState(() => localStorage.getItem('ombria-tema') || 'dark');
 
-  const cargarCuentas = useCallback(async (mantenerNumeroCuenta = null) => {
+  // Aplicar tema claro u oscuro en el elemento raíz (html[data-theme])
+  useEffect(() => {
+    document.documentElement.dataset.theme = tema;
+    localStorage.setItem('ombria-tema', tema);
+  }, [tema]);
+
+  const alternarTema = () => {
+    setTema((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
+  // Obtener todas las cuentas bancarias desde la API
+  const cargarCuentas = useCallback(async (mantenerNumero = null) => {
     try {
       setErrorGlobal('');
       const lista = await api.obtenerCuentas();
       setCuentas(lista);
 
       if (lista && lista.length > 0) {
-        const idBuscado = mantenerNumeroCuenta || cuentaActiva?.numeroCuenta || lista[0].numeroCuenta;
-        const encontrada = lista.find((c) => c.numeroCuenta === idBuscado) || lista[0];
+        const codigoBuscado = mantenerNumero || cuentaActiva?.numeroCuenta || lista[0].numeroCuenta;
+        const encontrada = lista.find((c) => c.numeroCuenta === codigoBuscado) || lista[0];
         setCuentaActiva(encontrada);
         return encontrada;
       }
       return null;
     } catch (err) {
-      console.error('Error al cargar cuentas:', err);
-      setErrorGlobal(err.message || 'Error de conexión con el servidor backend');
+      setErrorGlobal(err.message || 'No se pudo conectar con el servidor backend.');
       return null;
     }
   }, [cuentaActiva?.numeroCuenta]);
 
+  // Sincronizar saldo e historial de la cuenta seleccionada
   const sincronizarCuentaActiva = useCallback(async (numeroCuenta) => {
     if (!numeroCuenta) return;
     setCargando(true);
@@ -49,15 +65,15 @@ export default function App() {
       setTransacciones(datosHistorial.transacciones || []);
       setErrorGlobal('');
     } catch (err) {
-      console.error('Error al sincronizar cuenta activa:', err);
-      setErrorGlobal(err.message || 'No se pudieron sincronizar los datos de la cuenta');
+      setErrorGlobal(err.message || 'Error al sincronizar los datos de la cuenta.');
     } finally {
       setCargando(false);
     }
   }, []);
 
+  // Carga inicial al montar la aplicación
   useEffect(() => {
-    const init = async () => {
+    const inicializar = async () => {
       setCargando(true);
       const primeraCuenta = await cargarCuentas();
       if (primeraCuenta) {
@@ -65,10 +81,11 @@ export default function App() {
       }
       setCargando(false);
     };
-    init();
+    inicializar();
   }, []);
 
-  const handleSeleccionarCuenta = async (numeroCuenta) => {
+  // Cambiar de cuenta activa desde el selector del Navbar
+  const manejarCambioCuenta = async (numeroCuenta) => {
     const seleccionada = cuentas.find((c) => c.numeroCuenta === numeroCuenta);
     if (seleccionada) {
       setCuentaActiva(seleccionada);
@@ -76,41 +93,36 @@ export default function App() {
     }
   };
 
-  const handleOperacion = async ({ tipo, monto, cuentaOrigen, cuentaDestino, numeroCuenta, descripcion }) => {
+  // Procesar Depósito, Retiro o Transferencia y actualizar estado sin recargar página
+  const manejarOperacion = async ({ tipo, monto, cuentaOrigen, cuentaDestino, numeroCuenta, descripcion }) => {
     setProcesando(true);
     try {
-      let respuesta;
       if (tipo === 'deposito') {
-        respuesta = await api.realizarDeposito({ numeroCuenta, monto, descripcion });
+        await api.realizarDeposito({ numeroCuenta, monto, descripcion });
         setNotificacion({
-          mensaje: `Abono de S/ ${monto.toFixed(2)} registrado en la cuenta ${numeroCuenta}.`,
+          mensaje: `Depósito de S/ ${monto.toFixed(2)} registrado en ${numeroCuenta}.`,
           tipo: 'exito',
         });
       } else if (tipo === 'retiro') {
-        respuesta = await api.realizarRetiro({ numeroCuenta, monto, descripcion });
+        await api.realizarRetiro({ numeroCuenta, monto, descripcion });
         setNotificacion({
-          mensaje: `Cargo por retiro de S/ ${monto.toFixed(2)} procesado en ${numeroCuenta}.`,
+          mensaje: `Retiro de S/ ${monto.toFixed(2)} procesado en ${numeroCuenta}.`,
           tipo: 'exito',
         });
       } else if (tipo === 'transferencia') {
-        respuesta = await api.realizarTransferencia({
-          cuentaOrigen,
-          cuentaDestino,
-          monto,
-          descripcion,
-        });
+        await api.realizarTransferencia({ cuentaOrigen, cuentaDestino, monto, descripcion });
         setNotificacion({
-          mensaje: `Transferencia de S/ ${monto.toFixed(2)} enviada a la cuenta ${cuentaDestino}.`,
+          mensaje: `Transferencia de S/ ${monto.toFixed(2)} enviada a ${cuentaDestino}.`,
           tipo: 'exito',
         });
       }
 
+      // Actualizar inmediatamente saldo y movimientos en la interfaz
       await cargarCuentas(cuentaActiva?.numeroCuenta);
       await sincronizarCuentaActiva(cuentaActiva?.numeroCuenta);
-      return respuesta;
     } catch (error) {
       setNotificacion({
-        mensaje: error.message || 'No se pudo procesar la transacción solicitada.',
+        mensaje: error.message || 'Error al ejecutar la operación bancaria.',
         tipo: 'error',
       });
       throw error;
@@ -119,137 +131,136 @@ export default function App() {
     }
   };
 
-  const otrasCuentas = cuentas.filter(
-    (c) => c.numeroCuenta !== cuentaActiva?.numeroCuenta
-  );
+  // Filtrar cuentas destinatarias (todas menos la activa)
+  const otrasCuentas = cuentas.filter((c) => c.numeroCuenta !== cuentaActiva?.numeroCuenta);
 
-  // Cálculo de resumen de ingresos y cargos de la cuenta activa
-  const resumenCuenta = transacciones.reduce(
+  // Calcular totales rápidos de abonos y retiros de la cuenta activa
+  const totales = transacciones.reduce(
     (acc, t) => {
-      const esDeposito = t.tipo === 'DEPOSITO';
-      const esTransfRecibida = t.tipo === 'TRANSFERENCIA' && t.cuentaDestino === cuentaActiva?.numeroCuenta;
-      if (esDeposito || esTransfRecibida) {
-        acc.ingresos += Number(t.monto || 0);
-      } else {
-        acc.egresos += Number(t.monto || 0);
-      }
+      const esIngreso =
+        t.tipo === 'DEPOSITO' ||
+        (t.tipo === 'TRANSFERENCIA' && t.cuentaDestino === cuentaActiva?.numeroCuenta);
+      if (esIngreso) acc.ingresos += Number(t.monto || 0);
+      else acc.egresos += Number(t.monto || 0);
       return acc;
     },
     { ingresos: 0, egresos: 0 }
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F4F0] flex flex-col font-sans text-[#14181F]">
+    <div className="min-h-dvh pb-10">
       
+      {/* Barra superior flotante */}
       <Navbar
         cuentas={cuentas}
         cuentaActiva={cuentaActiva}
-        onSeleccionarCuenta={handleSeleccionarCuenta}
+        onSeleccionarCuenta={manejarCambioCuenta}
         cargando={cargando}
         onRecargar={() => {
           cargarCuentas();
           sincronizarCuentaActiva(cuentaActiva?.numeroCuenta);
         }}
+        tema={tema}
+        onCambiarTema={alternarTema}
       />
 
-      {/* Encabezado contextual de página */}
-      <div className="bg-white border-b border-[#DEDCD3]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-              Operaciones Bancarias
-            </p>
-            <h1 className="text-lg sm:text-xl font-bold text-[#0B192C] tracking-tight">
-              Posición consolidada y registro de transacciones
-            </h1>
+      {/* Contenedor principal estilo panel Ombria (.main) */}
+      <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 mt-7">
+        <main className="ombria-main p-5 sm:p-7">
+          
+          {/* Encabezado de página estilo Ombria (.phead) */}
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+            <div>
+              <span className="text-xs font-semibold block mb-1" style={{ color: 'var(--muted)' }}>
+                Panel financiero · {cuentaActiva?.numeroCuenta || 'Cargando'}
+              </span>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight leading-tight">
+                Hola, {cuentaActiva?.titular?.split(' ')[0] || 'Usuario'}
+              </h1>
+            </div>
+
+            {/* Indicadores resumidos en píldoras */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="ombria-pill ombria-pill--good">
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                Ingresos: + S/ {totales.ingresos.toFixed(2)}
+              </span>
+              <span className="ombria-pill ombria-pill--bad">
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                Egresos: - S/ {totales.egresos.toFixed(2)}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-6 text-xs border-t sm:border-t-0 pt-2.5 sm:pt-0 border-[#EAE8E1]">
-            <div>
-              <span className="block text-[11px] text-slate-500">Abonos acumulados</span>
-              <span className="font-mono font-semibold text-emerald-700 tabular-nums">
-                + S/ {resumenCuenta.ingresos.toFixed(2)}
-              </span>
+          {/* Alerta de conexión si el servidor backend está apagado */}
+          {errorGlobal && (
+            <div
+              className="mb-6 p-4 rounded-2xl flex items-center justify-between gap-3 text-xs font-semibold"
+              style={{ background: 'var(--bad-soft)', color: 'var(--bad)' }}
+            >
+              <div className="flex items-center gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorGlobal}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  cargarCuentas();
+                  sincronizarCuentaActiva(cuentaActiva?.numeroCuenta);
+                }}
+                className="ombria-chip h-8 px-3 text-xs inline-flex items-center gap-1.5 shrink-0"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                Reintentar
+              </button>
             </div>
-            <div className="h-7 w-px bg-[#DEDCD3]"></div>
-            <div>
-              <span className="block text-[11px] text-slate-500">Cargos acumulados</span>
-              <span className="font-mono font-semibold text-rose-700 tabular-nums">
-                - S/ {resumenCuenta.egresos.toFixed(2)}
-              </span>
+          )}
+
+          {/* Cuadrícula principal: Saldo + Formulario a la izquierda, Historial a la derecha */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 items-start">
+            
+            <div className="lg:col-span-5 space-y-4 sm:space-y-5">
+              <SaldoCard cuenta={cuentaActiva} cargando={cargando} />
+              <FormOperacion
+                cuentaActiva={cuentaActiva}
+                otrasCuentas={otrasCuentas}
+                onSubmitOperacion={manejarOperacion}
+                procesando={procesando}
+              />
             </div>
+
+            <div className="lg:col-span-7">
+              <HistorialTransacciones
+                transacciones={transacciones}
+                cuentaActiva={cuentaActiva}
+                cargando={cargando}
+              />
+            </div>
+
           </div>
-        </div>
+
+          {/* Pie de página integrado dentro del contenedor principal */}
+          <footer
+            className="mt-8 pt-5 border-t flex flex-col sm:flex-row items-center justify-between gap-2 text-xs font-medium"
+            style={{ borderColor: 'var(--line)', color: 'var(--muted)' }}
+          >
+            <span>
+              Trabajo Práctico: Sistema de Gestión de Cuenta Bancaria Simplificada · Ingeniería Web
+            </span>
+            <span>
+              Desarrollado por <b style={{ color: 'var(--ink)' }}>Rodrigo Gutierrez Lazo</b>
+            </span>
+          </footer>
+
+        </main>
       </div>
 
-      {/* Área de trabajo principal */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        
-        {errorGlobal && (
-          <div className="mb-6 p-4 rounded bg-rose-50 border border-rose-200 text-rose-900 flex items-start justify-between gap-3">
-            <div className="flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-rose-700 shrink-0 mt-0.5" />
-              <div className="text-xs">
-                <p className="font-bold">Error de comunicación con el servidor</p>
-                <p className="text-rose-800 mt-0.5">{errorGlobal}</p>
-              </div>
-            </div>
-            <button
-              onClick={() => {
-                cargarCuentas();
-                sincronizarCuentaActiva(cuentaActiva?.numeroCuenta);
-              }}
-              className="px-2.5 py-1 rounded bg-rose-800 hover:bg-rose-900 text-white text-xs font-medium flex items-center gap-1 shrink-0"
-            >
-              <RefreshCw className="w-3 h-3" />
-              Reintentar
-            </button>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
-          {/* Columna de Posición y Formulario (5/12) */}
-          <div className="lg:col-span-5 space-y-6">
-            <SaldoCard cuenta={cuentaActiva} cargando={cargando} />
-            <FormOperacion
-              cuentaActiva={cuentaActiva}
-              otrasCuentas={otrasCuentas}
-              onSubmitOperacion={handleOperacion}
-              procesando={procesando}
-            />
-          </div>
-
-          {/* Columna de Estado de Cuenta / Historial (7/12) */}
-          <div className="lg:col-span-7">
-            <HistorialTransacciones
-              transacciones={transacciones}
-              cuentaActiva={cuentaActiva}
-              cargando={cargando}
-            />
-          </div>
-
-        </div>
-
-      </main>
-
+      {/* Notificación flotante tipo toast */}
       <AlertNotification
         mensaje={notificacion.mensaje}
         tipo={notificacion.tipo}
         onClose={() => setNotificacion({ mensaje: '', tipo: 'exito' })}
       />
-
-      {/* Pie de página sobrio */}
-      <footer className="bg-white border-t border-[#DEDCD3] py-4 mt-10 text-slate-500 text-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-center sm:text-left">
-          <p className="text-slate-600">
-            Sistema de Gestión de Cuenta Bancaria • <span className="text-slate-500">Ingeniería Web</span>
-          </p>
-          <p className="text-slate-600">
-            Desarrollado por <strong className="font-semibold text-[#0B192C]">Rodrigo Gutierrez Lazo</strong>
-          </p>
-        </div>
-      </footer>
 
     </div>
   );
